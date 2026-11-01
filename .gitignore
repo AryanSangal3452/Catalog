@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.env
+haat.sqlite
+haat.sqlite-shm
+haat.sqlite-wal
+uploads/
