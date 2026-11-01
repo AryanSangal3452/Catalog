@@ -35,9 +35,9 @@ The repository includes a Render Blueprint in `render.yaml`. In Render, choose *
 
 ### Deploy on Cloudflare Workers (free tier)
 
-The Cloudflare version uses Workers for the API and website, D1 for catalog and order data, and R2 for uploaded photos. It uses new Cloudflare storage and starts with an empty database; the local SQLite file is not deployed.
+The Cloudflare version uses Workers for the API and website and D1 for catalog, orders, sessions, and compressed photo uploads. It starts with an empty database; the local SQLite file is not deployed. Photos are capped at 1.5 MB after compression to fit the free database setup.
 
-1. Create a D1 database named `haat-catalog` and an R2 bucket named `haat-catalog-uploads` in the Cloudflare dashboard.
+1. Create the D1 database named `haat-catalog` in the Cloudflare dashboard.
 2. Copy the database ID from the D1 page into `wrangler.toml` in place of `REPLACE_AFTER_CREATING_D1`.
 3. In a terminal with Wrangler authenticated (`npx --yes wrangler login`), run `npx --yes wrangler d1 execute haat-catalog --remote --file=schema.sql` to create the tables.
 4. Connect this GitHub repository under **Workers & Pages → Create application → Workers → Import a repository**. Set the build command to `npm run build` and the deploy command to `npx --yes wrangler deploy`.
