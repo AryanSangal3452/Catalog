@@ -12,7 +12,18 @@ async function auth(req,env){const token=cookie(req);if(!token)return null;const
 async function shopFor(env,user){return user?env.DB.prepare('SELECT * FROM shops WHERE userId=?').bind(user.id).first():null}
 function sessionResponse(user,token,code=200){return json({user:publicUser(user,user.shop)},code,{'Set-Cookie':`haat_session=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=604800; Secure`})}
 async function api(req,env,url){const p=url.pathname.split('/').filter(Boolean),method=req.method,db=env.DB;
- if(method==='GET'&&url.pathname==='/api/health')return json({ok:true});
+ if(method==='GET'&&url.pathname==='/api/health'){
+  if(!db)return json({ok:false,database:'unavailable'},503);
+  try{
+   const required=['users','shops','products','orders','sessions','uploads'];
+   const found=await rows(db,`SELECT name FROM sqlite_master WHERE type='table' AND name IN (${required.map(()=>'?').join(',')})`,...required);
+   const present=new Set(found.map(table=>table.name));
+   const missing=required.filter(name=>!present.has(name));
+   return missing.length?json({ok:false,database:'connected',schema:'incomplete',missingTables:missing},503):json({ok:true,database:'connected',schema:'ready'});
+  }catch{
+   return json({ok:false,database:'unavailable'},503);
+  }
+ }
  if(method==='POST'&&url.pathname==='/api/auth/signup'){
   const b=await body(req),email=String(b.email||'').trim().toLowerCase(),password=String(b.password||''),name=String(b.shopName||'').trim();if(!/^\S+@\S+\.\S+$/.test(email)||password.length<8||name.length<2)return json({error:'Enter a valid email, shop name and password (8+ characters).'},400);
   if(await db.prepare('SELECT id FROM users WHERE email=?').bind(email).first())return json({error:'An account with this email already exists.'},409);
