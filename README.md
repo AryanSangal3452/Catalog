@@ -33,6 +33,17 @@ Deploy the Node server behind HTTPS and keep `haat.sqlite` and `uploads/` on per
 
 The repository includes a Render Blueprint in `render.yaml`. In Render, choose **New → Blueprint**, connect `AryanSangal3452/Catalog`, and review the service before deploying. The service builds the React frontend and runs the Node server from `main`; its 1 GB persistent disk stores the SQLite database and uploaded photos. Free Render web services do not support persistent disks, so this Blueprint uses the smallest paid web plan. Current published rates are about **$7/month** for compute plus **$0.25/month** for a 1 GB disk, before any applicable bandwidth charges. Review the current [Render pricing](https://render.com/pricing) in the deployment dashboard before creating it.
 
+### Deploy on Cloudflare Workers (free tier)
+
+The Cloudflare version uses Workers for the API and website, D1 for catalog and order data, and R2 for uploaded photos. It uses new Cloudflare storage and starts with an empty database; the local SQLite file is not deployed.
+
+1. Create a D1 database named `haat-catalog` and an R2 bucket named `haat-catalog-uploads` in the Cloudflare dashboard.
+2. Copy the database ID from the D1 page into `wrangler.toml` in place of `REPLACE_AFTER_CREATING_D1`.
+3. In a terminal with Wrangler authenticated (`npx --yes wrangler login`), run `npx --yes wrangler d1 execute haat-catalog --remote --file=schema.sql` to create the tables.
+4. Connect this GitHub repository under **Workers & Pages → Create application → Workers → Import a repository**. Set the build command to `npm run build` and the deploy command to `npx --yes wrangler deploy`.
+
+The first deployment creates a `*.workers.dev` public URL. Free tier usage limits apply. For a command-line deployment instead, run `npm run deploy:cloudflare` after completing the database, bucket, and ID setup above.
+
 ### Google Drive setup
 
 The device upload works without extra credentials. To enable Google Drive selection:

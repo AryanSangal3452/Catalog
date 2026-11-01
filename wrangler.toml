@@ -1,0 +1,15 @@
+name = "haat-catalog"
+main = "worker.js"
+compatibility_date = "2026-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "haat-catalog"
+database_id = "b12dc588-b908-42bd-ab11-dc5844c6e364"
+
