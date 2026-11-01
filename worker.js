@@ -2,7 +2,7 @@ const json=(data,status=200,headers={})=>new Response(JSON.stringify(data),{stat
 const id=()=>crypto.randomUUID(), now=()=>new Date().toISOString(), random=(n=32)=>Array.from(crypto.getRandomValues(new Uint8Array(n)),x=>x.toString(16).padStart(2,'0')).join('');
 const slugify=s=>s.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,45)||'my-shop';
 function cookie(req){return req.headers.get('Cookie')?.split(';').map(x=>x.trim()).find(x=>x.startsWith('haat_session='))?.slice(13)||''}
-async function passwordHash(password,salt){const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveBits']);return Array.from(new Uint8Array(await crypto.subtle.deriveBits({name:'PBKDF2',salt:Uint8Array.from(salt.match(/.{2}/g),x=>parseInt(x,16)),iterations:180000,hash:'SHA-256'},key,256)),x=>x.toString(16).padStart(2,'0')).join('')}
+async function passwordHash(password,salt){const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveBits']);return Array.from(new Uint8Array(await crypto.subtle.deriveBits({name:'PBKDF2',salt:Uint8Array.from(salt.match(/.{2}/g),x=>parseInt(x,16)),iterations:100000,hash:'SHA-256'},key,256)),x=>x.toString(16).padStart(2,'0')).join('')}
 const publicUser=(u,shop)=>({id:u.id,email:u.email,shop});
 const cleanProduct=p=>({...p,price:Number(p.price)});
 const cleanOrder=o=>({...o,items:JSON.parse(o.items),total:Number(o.total)});
