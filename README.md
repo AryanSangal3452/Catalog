@@ -27,7 +27,11 @@ Open [http://localhost:3000](http://localhost:3000). The Node server runs Vite i
 
 ## Deployment notes
 
-Deploy the Node server behind HTTPS and keep `haat.sqlite` and `uploads/` on persistent storage. QR sharing points to the deployed public URL. Video media still uses a hosted URL; payment processing, password reset, and production hosting configuration are not included.
+Deploy the Node server behind HTTPS and keep `haat.sqlite` and `uploads/` on persistent storage. QR sharing points to the deployed public URL. Video media still uses a hosted URL; payment processing and password reset are not included.
+
+### Deploy from GitHub with Render
+
+The repository includes a Render Blueprint in `render.yaml`. In Render, choose **New → Blueprint**, connect `AryanSangal3452/Catalog`, and review the service before deploying. The service builds the React frontend and runs the Node server from `main`; its 1 GB persistent disk stores the SQLite database and uploaded photos. Free Render web services do not support persistent disks, so this Blueprint uses the smallest paid web plan. Current published rates are about **$7/month** for compute plus **$0.25/month** for a 1 GB disk, before any applicable bandwidth charges. Review the current [Render pricing](https://render.com/pricing) in the deployment dashboard before creating it.
 
 ### Google Drive setup
 

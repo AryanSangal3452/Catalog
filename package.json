@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "node server.js",
     "build": "vite build",
+    "serve": "node start.js",
     "start": "npm run build && node start.js"
   },
   "engines": {

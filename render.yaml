@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: haat-catalog
+    runtime: node
+    plan: 0.5c-512mb
+    region: singapore
+    buildCommand: npm ci && npm run build
+    startCommand: npm run serve
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: DATA_DIR
+        value: /var/data
+    disk:
+      name: haat-data
+      mountPath: /var/data
+      sizeGB: 1
