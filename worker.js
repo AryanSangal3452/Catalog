@@ -10,7 +10,7 @@ async function body(req,limit=1500000){const text=await req.text();if(text.lengt
 async function rows(db,sql,...args){return(await db.prepare(sql).bind(...args).all()).results}
 async function auth(req,env){const token=cookie(req);if(!token)return null;const s=await env.DB.prepare('SELECT userId FROM sessions WHERE token=? AND expiresAt>?').bind(token,Date.now()).first();if(!s)return null;return await env.DB.prepare('SELECT * FROM users WHERE id=?').bind(s.userId).first()}
 async function shopFor(env,user){return user?env.DB.prepare('SELECT * FROM shops WHERE userId=?').bind(user.id).first():null}
-async function issueSession(user,code=201){const token=random();await user.env.DB.prepare('INSERT INTO sessions VALUES(?,?,?)').bind(token,user.id,Date.now()+604800000).run();return json({user:publicUser(user,user.shop)},code,{'Set-Cookie':`haat_session=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=604800; Secure`})}
+function sessionResponse(user,token,code=200){return json({user:publicUser(user,user.shop)},code,{'Set-Cookie':`haat_session=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=604800; Secure`})}
 async function api(req,env,url){const p=url.pathname.split('/').filter(Boolean),method=req.method,db=env.DB;
  if(method==='GET'&&url.pathname==='/api/health')return json({ok:true});
  if(method==='POST'&&url.pathname==='/api/auth/signup'){
@@ -18,10 +18,10 @@ async function api(req,env,url){const p=url.pathname.split('/').filter(Boolean),
   if(await db.prepare('SELECT id FROM users WHERE email=?').bind(email).first())return json({error:'An account with this email already exists.'},409);
   let slug=slugify(name),base=slug,n=2;while(await db.prepare('SELECT id FROM shops WHERE slug=?').bind(slug).first())slug=`${base}-${n++}`;
   const user={id:id(),email,salt:random(16),createdAt:now()};user.hash=await passwordHash(password,user.salt);const shop={id:id(),userId:user.id,name,slug,description:'A little joy from our shop.',createdAt:now()};
-  await db.batch([db.prepare('INSERT INTO users VALUES(?,?,?,?,?)').bind(user.id,email,user.salt,user.hash,user.createdAt),db.prepare('INSERT INTO shops VALUES(?,?,?,?,?,?)').bind(shop.id,user.id,name,slug,shop.description,shop.createdAt)]);user.env=env;user.shop=shop;return issueSession(user);
+  const token=random();await db.batch([db.prepare('INSERT INTO users VALUES(?,?,?,?,?)').bind(user.id,email,user.salt,user.hash,user.createdAt),db.prepare('INSERT INTO shops VALUES(?,?,?,?,?,?)').bind(shop.id,user.id,name,slug,shop.description,shop.createdAt),db.prepare('INSERT INTO sessions VALUES(?,?,?)').bind(token,user.id,Date.now()+604800000)]);user.shop=shop;return sessionResponse(user,token,201);
  }
  if(method==='POST'&&url.pathname==='/api/auth/login'){
-  const b=await body(req),user=await db.prepare('SELECT * FROM users WHERE email=?').bind(String(b.email||'').trim().toLowerCase()).first();if(!user||await passwordHash(String(b.password||''),user.salt)!==user.hash)return json({error:'Email or password is incorrect.'},401);const shop=await shopFor(env,user),token=random();await db.prepare('INSERT INTO sessions VALUES(?,?,?)').bind(token,user.id,Date.now()+604800000).run();return json({user:publicUser(user,shop)},200,{'Set-Cookie':`haat_session=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=604800; Secure`});
+  const b=await body(req),user=await db.prepare('SELECT * FROM users WHERE email=?').bind(String(b.email||'').trim().toLowerCase()).first();if(!user||await passwordHash(String(b.password||''),user.salt)!==user.hash)return json({error:'Email or password is incorrect.'},401);user.shop=await shopFor(env,user);const token=random();await db.prepare('INSERT INTO sessions VALUES(?,?,?)').bind(token,user.id,Date.now()+604800000).run();return sessionResponse(user,token);
  }
  if(method==='POST'&&url.pathname==='/api/auth/logout'){await db.prepare('DELETE FROM sessions WHERE token=?').bind(cookie(req)).run();return json({ok:true},200,{'Set-Cookie':'haat_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0; Secure'})}
  if(method==='GET'&&url.pathname==='/api/me'){const u=await auth(req,env);return u?json({user:publicUser(u,await shopFor(env,u))}):json({error:'Sign in required'},401)}
